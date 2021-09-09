@@ -148,8 +148,18 @@ descdist(seed.rich$richness, discrete=TRUE, boot=500) # Poisson
 ## BIRD OBS MODELS #
 ####################
 # Bird observations
-bird.obs.nb <- glmer.nb(count~treatment+ (1|site), 
-                 	data=bird.obs) 
+bird.obs.nb <- glmer.nb(count ~ treatment + (1|site),
+                        data = bird.obs)
+bird.obs.nb.2 <- glm.nb(count ~ treatment, 
+                        data = bird.obs)
+
+summary(bird.obs.nb)
+summary(bird.obs.nb.2)
+
+anova(bird.obs.nb)
+
+TukeyHSD(aov(count ~ treatment, data = bird.obs))
+
 sim.bird.obs.nb <- simulateResiduals(fittedModel = bird.obs.nb, n = 250)
 plot(sim.bird.obs.nb)
 
