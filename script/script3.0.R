@@ -22,11 +22,11 @@ library(fitdistrplus)
 ####################
 ###### DATA ########
 ####################
-bird.dat.og <- read.csv(file = "bird_data2.0.csv",
+bird.dat.og <- read.csv(file = "data/bird_data2.0.csv",
                    header = TRUE)
 head(bird.dat.og)
 
-seed.dat.og <- read.csv(file = "seed_traps2.0.csv",
+seed.dat.og <- read.csv(file = "data/seed_traps2.0.csv",
                    header = TRUE)
 head(seed.dat.og)
 
@@ -35,7 +35,7 @@ head(seed.dat.og)
 ####################
 
 # Birds
-bird.dat <- select(bird.dat.og, -c("camera.card", "X", "notes", "photo.number"))
+bird.dat <- dplyr::select(bird.dat.og, -c("camera.card", "X", "notes", "photo.number"))
 bird.dat$date <- as.Date(with(bird.dat, paste(year, month, day, sep = "-")), "%Y-%m-%d")
 
 bird.week <- bird.dat %>% 
@@ -43,8 +43,8 @@ bird.week <- bird.dat %>%
 	summarise(value = sum(presence))
 
 view(bird.week)
-# looks like a 2 week acclimitizaton period
-# observatons really picked up in January (observations are
+# looks like a 2 week acclimatization period
+# observations really picked up in January (observations are
 # essentially increasing with time throughout our sampling period)
 
 bird.dat.drop <- bird.dat %>% 
@@ -83,7 +83,7 @@ bird.obs <- bird.clean %>%
   summarise(count = n())
 
 bird.obs <- bird.obs %>% 
-	select(treatment,site,count)
+	dplyr::select(treatment,site,count)
 
 missing <- data.frame(site = "six", 
 											treatment = "4",
@@ -102,7 +102,7 @@ bird.rich$richness <- c(2,2,3,3,2,2,2,3,3,3,4,4,3,3,3,3,4,4,5,5,
 									 2,0,2,1,1,2,2,1,4,4,4,4,2,2,2,2,1,1,1,1)
 bird.rich$treatment <- as.factor(bird.rich$treatment)
 bird.rich <- bird.rich %>% 
-	select(treatment,sites,richness)
+	dplyr::select(treatment,sites,richness)
 
 # Seeds
 seed.obs <- seed.dat %>% 
@@ -127,7 +127,7 @@ seed.rich <- as.data.frame(cbind(sites,treatment))
 seed.rich$richness <- c(1,2,5,2,0,0,0,2,1,0,0,5,0,3,4,3,0,2,2,3,
 												1,1,2,2,1,1,1,1,0,1,1,3,0,0,4,4,2,0,0,0)
 seed.rich <- seed.rich %>% 
-	select(treatment,sites,richness)
+	dplyr::select(treatment,sites,richness)
 
 ####################
 ### DISTRIBUTION ###
