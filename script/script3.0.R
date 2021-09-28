@@ -4,7 +4,7 @@
 # H01: as food diversity increases, bird and seed richness increase
 # H02: as food diversity increases, bird and seed observations increase
 
-####################
+
 ##### PACKAGES #####
 ####################
 library(tidyverse)
@@ -20,8 +20,6 @@ library(glmmTMB)
 library(fitdistrplus)
 
 
-
-####################
 ###### DATA ########
 ####################
 bird.dat.og <- read.csv(file = "data/bird_data2.0.csv",
@@ -32,7 +30,7 @@ seed.dat.og <- read.csv(file = "data/seed_traps2.0.csv",
                    header = TRUE)
 head(seed.dat.og)
 
-####################
+
 ### ACCLIM PER #####
 ####################
 
@@ -44,9 +42,9 @@ bird.week <- bird.dat %>%
 	group_by(week = week(date)) %>% 
 	summarise(value = sum(presence))
 
-view(bird.week)
-# looks like a 2 week acclimatization period
-# observations really picked up in January (observations are
+bird.week
+# looks like a 2 week acclimitizaton period
+# observatons really picked up in January (observations are
 # essentially increasing with time throughout our sampling period)
 
 bird.dat.drop <- bird.dat %>% 
@@ -69,7 +67,7 @@ seed.dat <- seed.dat %>%
 	mutate(week = week(DATE)) %>% 
 	filter(week != 48 & week != 47)
 
-####################
+
 ## SUMMARIZE DATA ##
 ####################
 
@@ -84,7 +82,7 @@ bird.obs <- bird.clean %>%
   group_by(site, treatment) %>% 
   summarise(count = n())
 
-bird.obs <- bird.obs %>% 
+bird.obs <- as.data.frame(bird.obs) %>% 
 	dplyr::select(treatment,site,count)
 
 missing <- data.frame(site = "six", 
@@ -103,7 +101,7 @@ bird.rich <- as.data.frame(cbind(sites,treatment))
 bird.rich$richness <- c(2,2,3,3,2,2,2,3,3,3,4,4,3,3,3,3,4,4,5,5,
 									 2,0,2,1,1,2,2,1,4,4,4,4,2,2,2,2,1,1,1,1)
 bird.rich$treatment <- as.factor(bird.rich$treatment)
-bird.rich <- bird.rich %>% 
+bird.rich <- as.data.frame(bird.rich) %>% 
 	dplyr::select(treatment,sites,richness)
 
 # Seeds
@@ -128,10 +126,10 @@ seed.species.count <- seed.species.count %>%
 seed.rich <- as.data.frame(cbind(sites,treatment))
 seed.rich$richness <- c(1,2,5,2,0,0,0,2,1,0,0,5,0,3,4,3,0,2,2,3,
 												1,1,2,2,1,1,1,1,0,1,1,3,0,0,4,4,2,0,0,0)
-seed.rich <- seed.rich %>% 
+seed.rich <- as.data.frame(seed.rich) %>% 
 	dplyr::select(treatment,sites,richness)
 
-####################
+
 ### DISTRIBUTION ###
 ####################
 plotdist(bird.obs$count, histo = TRUE, demp = TRUE)
@@ -141,27 +139,71 @@ plotdist(bird.rich$richness, histo = TRUE, demp = TRUE)
 descdist(bird.rich$richness, discrete=TRUE, boot=500) # poisson
 
 plotdist(seed.obs$SEEDS, histo = TRUE, demp = TRUE)
-descdist(seed.obs$SEEDS, discrete=TRUE, boot=500) # Poisson
+descdist(seed.obs$SEEDS, discrete=TRUE, boot=500) # poisson
 
 plotdist(seed.rich$richness, histo = TRUE, demp = TRUE)
-descdist(seed.rich$richness, discrete=TRUE, boot=500) # Poisson
+descdist(seed.rich$richness, discrete=TRUE, boot=500) # poisson
 
-####################
+
 ## BIRD OBS MODELS #
 ####################
 # Bird observations
-bird.obs.nb <- glmer.nb(count ~ treatment + (1|site),
-                        data = bird.obs)
-bird.obs.nb.2 <- glm.nb(count ~ treatment, 
-                        data = bird.obs)
+# we want to look at the effect of treatment on bird count
+# while accounting for site as a random effect
+birds.obs.fit.nb <- glmer.nb(count ~ treatment + (1 | site),
+                             data = bird.obs)
+birds.obs.fit.pois <- glmer(count ~ treatment + (1 | site),
+                            data = bird.obs, family = poisson)
 
-summary(bird.obs.nb)
-summary(bird.obs.nb.2)
+# check some assumptions
+plot(count ~ as.numeric(treatment), 
+     data = bird.obs)
+plot(residuals(birds.obs.fit.nb) ~ as.numeric(bird.obs$treatment))
+plot(residuals(birds.obs.fit.pois) ~ as.numeric(bird.obs$treatment))
+abline(a = 0, b = 0, col = "blue", lwd = 2)
+hist(residuals(birds.obs.fit.nb))
+hist(residuals(birds.obs.fit.pois))
+#' we meet the following assumptions based on our residual plots:
+#' - normality
+#' - linearity
+#' - homoscedasticity
+#' - no autocorrelation 
+#' perfect
 
-anova(bird.obs.nb)
+# look at predictions 
+preds.nb <- predict(birds.obs.fit.nb)
+preds.pois <- predict(birds.obs.fit.pois)
+par(mfrow = c(2, 2))
+plot(count ~ as.numeric(treatment), 
+     data = bird.obs)
+plot(preds.nb ~ as.numeric(bird.obs$treatment))
+plot(count ~ as.numeric(treatment), 
+     data = bird.obs)
+plot(preds.pois ~ as.numeric(bird.obs$treatment))
 
-TukeyHSD(aov(count ~ treatment, data = bird.obs))
+# look at our coefs 
+summary(birds.obs.fit.pois)
+anova(birds.obs.fit.pois)
+coefs <- summary(birds.obs.fit.pois)$coef
+coefs_est <- exp(coefs[, "Estimate"])
+uprs <- exp(coefs[, "Estimate"] + 1.96 * coefs[, "Std. Error"])
+lwrs <- exp(coefs[, "Estimate"] - 1.96 * coefs[, "Std. Error"])
+(uprs - 1) * 100       # upr CI %'s
+(coefs_est - 1) * 100  # coefficient estimates CI %'s
+(lwrs - 1) * 100       # lwr CI %'s
 
+par(mfrow = c(1, 1))
+plot(exp(coefs[1:4,"Estimate"]), ylim = range(lwrs[1:4], uprs[1:4]))
+segments(1:7, lwrs[1:4], 1:7, uprs[1:4])
+abline(h = 1)
+
+
+
+
+
+
+bird.obs.nb <- glmer.nb(count~treatment+ (1|site), 
+                 	data=bird.obs) 
 sim.bird.obs.nb <- simulateResiduals(fittedModel = bird.obs.nb, n = 250)
 plot(sim.bird.obs.nb)
 
@@ -181,7 +223,7 @@ sim.bird.obs.pois.zi <- simulateResiduals(fittedModel = bird.obs.pois.zi, n = 25
 plot(sim.bird.obs.pois.zi)
 Anova(bird.obs.pois.zi)
 
-####################
+
 # BIRD RICH MODELS #
 ####################
 # GLMM
@@ -199,7 +241,7 @@ plot(sim.glmm.ovd.bird.rich)
 hist(sim.glmm.ovd.bird.rich)
 
 Anova(glmm.ovd.bird.rich)
-####################
+
 # SEED OBS MODELS #
 ####################
 # Poisson zero inflated
@@ -211,7 +253,7 @@ poisZI.seeds.obs <- glmmTMB(SEEDS~TREATMENT+
 sim.poisZI.seeds.obs <- simulateResiduals(fittedModel = poisZI.seeds.obs, n = 250)
 plot(sim.poisZI.seeds.obs)
 Anova(poisZI.seeds.obs)
-####################
+
 # SEED RICH MODELS #
 ####################
 poisZI.seed.rich <- glmmTMB(richness~treatment+
