@@ -150,19 +150,34 @@ descdist(seed.rich$richness, discrete=TRUE, boot=500) # poisson
 # Bird observations
 # we want to look at the effect of treatment on bird count
 # while accounting for site as a random effect
+# neg binom fit
 birds.obs.fit.nb <- glmer.nb(count ~ treatment + (1 | site),
                              data = bird.obs)
+# poisson fit
 birds.obs.fit.pois <- glmer(count ~ treatment + (1 | site),
-                            data = bird.obs, family = poisson)
+                            data = bird.obs, family = poisson(link = "log"))
+glmmPQL(count ~ treatment, random = ~1|site,
+        data = bird.obs, family = poisson(link = "log"))
+# birds.obs.fit.pois <- glm(count ~ treatment * site,
+#                             data = bird.obs)
 
 # check some assumptions
 plot(count ~ as.numeric(treatment), 
      data = bird.obs)
 plot(residuals(birds.obs.fit.nb) ~ as.numeric(bird.obs$treatment))
+abline(a = 0, b = 0, col = "blue", lwd = 2)
 plot(residuals(birds.obs.fit.pois) ~ as.numeric(bird.obs$treatment))
 abline(a = 0, b = 0, col = "blue", lwd = 2)
 hist(residuals(birds.obs.fit.nb))
 hist(residuals(birds.obs.fit.pois))
+# plot residuals from prediction to test for assumptions
+resfit <- resid(birds.obs.fit.nb)
+resfit <- resid(birds.obs.fit.pois)
+hist(resfit)
+plot(bird.obs$count, resfit, 
+     ylab = "Residuals", 
+     xlab = "Count") 
+abline(0, 0)        
 #' we meet the following assumptions based on our residual plots:
 #' - normality
 #' - linearity
@@ -181,6 +196,28 @@ plot(count ~ as.numeric(treatment),
      data = bird.obs)
 plot(preds.pois ~ as.numeric(bird.obs$treatment))
 
+# look at predictions from model
+# neg binom
+predict(birds.obs.fit.nb)
+bird.obs$pred = exp(predict(birds.obs.fit.nb))
+bird.obs$predicted = predict(birds.obs.fit.nb)    # save the predicted values
+bird.obs$residuals = residuals(birds.obs.fit.nb)  # save the residual values
+# poisson
+predict(birds.obs.fit.pois)
+bird.obs$pred = exp(predict(birds.obs.fit.pois))
+bird.obs$predicted = predict(birds.obs.fit.pois)    # save the predicted values
+bird.obs$residuals = residuals(birds.obs.fit.pois)  # save the residual values
+# quick look at the actual, predicted, and residual values
+pred_df <- bird.obs %>% 
+  dplyr::select(count, predicted, residuals)
+pred_df$predicted = exp(pred_df$predicted)
+pred_df$residuals = exp(pred_df$residuals)
+par(mfrow = c(1, 2))
+plot(fitted(birds.obs.fit.pois) ~ bird.obs$count)
+abline(0, 1, col = "blue", lwd = 2)
+plot(fitted(birds.obs.fit.nb) ~ bird.obs$count)
+abline(0, 1, col = "blue", lwd = 2)
+
 # look at our coefs 
 summary(birds.obs.fit.pois)
 anova(birds.obs.fit.pois)
@@ -195,7 +232,33 @@ lwrs <- exp(coefs[, "Estimate"] - 1.96 * coefs[, "Std. Error"])
 par(mfrow = c(1, 1))
 plot(exp(coefs[1:4,"Estimate"]), ylim = range(lwrs[1:4], uprs[1:4]))
 segments(1:7, lwrs[1:4], 1:7, uprs[1:4])
-abline(h = 1)
+
+coefs.fix <- fixef(birds.obs.fit.pois)
+exp(coefs.fix[1])
+exp(coefs.fix[1]) * exp(coefs.fix[2])
+exp(coefs.fix[1]) * exp(coefs.fix[3])
+exp(coefs.fix[1]) * exp(coefs.fix[4])
+
+coefs_func <- function(.) {
+  beta <- unname(fixef(.))
+  
+  control <- exp(beta[1])             # mean count for control 
+  treat1 <-  exp(beta[1] + beta[2])   # mean count for treat 1 is this much greater than control
+  treat2 <-  exp(beta[1] + beta[3])   # mean count for treat 2 is this much greater than control
+  treat3 <-  exp(beta[1] + beta[4])   # mean count for treat 3 is this much greater than control
+  
+  c(control_mu = control, treat1 = treat1, treat2 = treat2, treat3 = treat3)
+  
+}
+
+start <- Sys.time()
+rand <- bootMer(x = birds.obs.fit.pois, FUN = coefs_func, nsim = 1000)$t
+Sys.time() - start
+
+summ <- apply(rand, 2, function(x) c(mean = mean(x, na.rm = TRUE),
+                                     quantile(x, c(0.025, 0.975), na.rm = TRUE)))
+summ
+
 
 
 
