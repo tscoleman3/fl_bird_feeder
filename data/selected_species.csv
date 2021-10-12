@@ -1,0 +1,41 @@
+"","Site","Feeder","1st","2nd","3rd","4th","5th","6th","7th","8th","9th","10th","11th","12th"
+"1","1","Empty",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"2","1","Low","wheat","safflower","peanuts","rye",NA,NA,NA,NA,NA,NA,NA,NA
+"3","1","Medium","barely","corn","nyjer","white millet","oats","brown top millet","peanuts","safflower",NA,NA,NA,NA
+"4","1","High","grubs","brown top millet","nyjer","wheat","peanuts","white millet","safflower","barely","rye","corn","sunflower","oats"
+"5","2","Empty",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"6","2","Low","nyjer","wheat","sunflower","white millet",NA,NA,NA,NA,NA,NA,NA,NA
+"7","2","Medium","safflower","white millet","nyjer","grubs","barely","peanuts","oats","rye",NA,NA,NA,NA
+"8","2","High","oats","safflower","corn","white millet","barely","wheat","sunflower","nyjer","brown top millet","rye","grubs","peanuts"
+"9","3","Empty",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"10","3","Low","barely","corn","sunflower","oats",NA,NA,NA,NA,NA,NA,NA,NA
+"11","3","Medium","nyjer","oats","brown top millet","peanuts","wheat","grubs","barely","rye",NA,NA,NA,NA
+"12","3","High","sunflower","peanuts","corn","rye","brown top millet","oats","grubs","wheat","white millet","nyjer","safflower","barely"
+"13","4","Empty",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"14","4","Low","brown top millet","sunflower","corn","barely",NA,NA,NA,NA,NA,NA,NA,NA
+"15","4","Medium","safflower","nyjer","corn","brown top millet","barely","grubs","oats","peanuts",NA,NA,NA,NA
+"16","4","High","rye","peanuts","oats","white millet","brown top millet","grubs","sunflower","safflower","corn","wheat","barely","nyjer"
+"17","5","Empty",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"18","5","Low","barely","wheat","corn","oats",NA,NA,NA,NA,NA,NA,NA,NA
+"19","5","Medium","rye","corn","barely","oats","grubs","safflower","white millet","sunflower",NA,NA,NA,NA
+"20","5","High","sunflower","safflower","rye","grubs","brown top millet","white millet","wheat","oats","barely","corn","nyjer","peanuts"
+"21","6","Empty",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"22","6","Low","safflower","rye","oats","peanuts",NA,NA,NA,NA,NA,NA,NA,NA
+"23","6","Medium","peanuts","barely","sunflower","white millet","rye","wheat","nyjer","corn",NA,NA,NA,NA
+"24","6","High","peanuts","nyjer","safflower","grubs","rye","barely","corn","white millet","oats","sunflower","wheat","brown top millet"
+"25","7","Empty",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"26","7","Low","wheat","sunflower","rye","corn",NA,NA,NA,NA,NA,NA,NA,NA
+"27","7","Medium","grubs","sunflower","safflower","peanuts","white millet","rye","wheat","corn",NA,NA,NA,NA
+"28","7","High","safflower","nyjer","grubs","brown top millet","oats","barely","peanuts","wheat","rye","white millet","corn","sunflower"
+"29","8","Empty",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"30","8","Low","barely","corn","nyjer","brown top millet",NA,NA,NA,NA,NA,NA,NA,NA
+"31","8","Medium","white millet","brown top millet","barely","wheat","safflower","corn","peanuts","nyjer",NA,NA,NA,NA
+"32","8","High","corn","oats","wheat","brown top millet","nyjer","white millet","barely","safflower","peanuts","grubs","rye","sunflower"
+"33","9","Empty",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"34","9","Low","white millet","corn","grubs","oats",NA,NA,NA,NA,NA,NA,NA,NA
+"35","9","Medium","safflower","nyjer","peanuts","brown top millet","corn","barely","wheat","oats",NA,NA,NA,NA
+"36","9","High","safflower","brown top millet","nyjer","oats","peanuts","sunflower","barely","corn","rye","grubs","white millet","wheat"
+"37","10","Empty",NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+"38","10","Low","brown top millet","grubs","safflower","peanuts",NA,NA,NA,NA,NA,NA,NA,NA
+"39","10","Medium","safflower","rye","sunflower","barely","peanuts","corn","wheat","nyjer",NA,NA,NA,NA
+"40","10","High","sunflower","rye","peanuts","wheat","oats","white millet","nyjer","barely","safflower","grubs","corn","brown top millet"
