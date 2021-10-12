@@ -173,9 +173,6 @@ bird
 
 
 
-########################################################################################################################################
-########################################################################################################################################
-########################################################################################################################################
 
 ##### seed data #####
 head(raw.seed.dat)
@@ -197,3 +194,39 @@ seed.dat$DATE <- as.Date(seed.dat$DATE)
 seed.dat.clean <- seed.dat %>% 
   mutate(week = week(DATE)) %>% 
   filter(week != 47 & week != 48)
+
+# seed observation sums across treatments and blocks; similar to bird.obs
+seed.obs <- seed.dat.clean %>% 
+  dplyr::group_by(TREATMENT, BLOCK) %>% 
+  dplyr::summarise(sum(SEEDS)) %>% 
+  dplyr::rename(SEEDS = "sum(SEEDS)")
+
+# total count of seed sps by treatment and site
+seed.species.count <- seed.dat %>% 
+  dplyr::group_by(TREATMENT, BLOCK, SPECIES) %>% 
+  dplyr::summarise(sum(SEEDS)) %>% 
+  dplyr::rename(SEEDS = "sum(SEEDS)")
+seed.species.count
+
+seed.species.count$TREATMENT <- factor(seed.species.count$TREATMENT,
+                                       levels = c("Control", "Low", "Medium", "High"))
+
+# remove the 0's to see what seeds were actually in the traps
+seed.species.count <- seed.species.count %>% 
+  filter(SEEDS > 0)
+seed.species.count
+
+# add in seed richness 
+seed.rich <- as.data.frame(cbind(seed.obs$BLOCK, seed.obs$TREATMENT))
+
+# not sure where these numbers come from
+seed.rich$richness <- c(1,2,5,2,0,0,0,2,1,0,0,5,0,3,4,3,0,2,2,3,
+                        1,1,2,2,1,1,1,1,0,1,1,3,0,0,4,4,2,0,0,0)
+seed.rich <- as.data.frame(seed.rich) %>% 
+  dplyr::rename(site = V1, treatment = V2, richness = richness) %>% 
+  dplyr::select(treatment, site, richness)
+seed.rich
+
+########################################################################################################################################
+########################################################################################################################################
+########################################################################################################################################
