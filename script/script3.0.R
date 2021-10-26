@@ -144,6 +144,8 @@ descdist(seed.obs$SEEDS, discrete=TRUE, boot=500) # poisson
 
 plotdist(seed.rich$richness, histo = TRUE, demp = TRUE)
 descdist(seed.rich$richness, discrete=TRUE, boot=500) # poisson
+
+
 ####################
 ## BIRD OBS MODELS #
 ####################
