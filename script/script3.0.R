@@ -70,7 +70,8 @@ seed.dat <- seed.dat %>%
 
 ## SUMMARIZE DATA ##
 ####################
-
+#### SUMMARIZE #####
+####################
 # Birds
 # count of individuals by species at each treatment and site
 bird.sps.count.by.treat <- bird.clean %>% 
@@ -104,9 +105,6 @@ bird.rich$treatment <- as.factor(bird.rich$treatment)
 bird.rich <- as.data.frame(bird.rich) %>% 
 	dplyr::select(treatment,sites,richness)
 
-
-
-
 # Seeds
 seed.obs <- seed.dat %>% 
   dplyr::group_by(TREATMENT, BLOCK) %>% 
@@ -132,10 +130,7 @@ seed.rich$richness <- c(1,2,5,2,0,0,0,2,1,0,0,5,0,3,4,3,0,2,2,3,
 seed.rich <- as.data.frame(seed.rich) %>% 
 	dplyr::select(treatment,sites,richness)
 
-########################################################################################################################################
-########################################################################################################################################
-########################################################################################################################################
-
+####################
 ### DISTRIBUTION ###
 ####################
 plotdist(bird.obs$count, histo = TRUE, demp = TRUE)
@@ -149,8 +144,7 @@ descdist(seed.obs$SEEDS, discrete=TRUE, boot=500) # poisson
 
 plotdist(seed.rich$richness, histo = TRUE, demp = TRUE)
 descdist(seed.rich$richness, discrete=TRUE, boot=500) # poisson
-
-
+####################
 ## BIRD OBS MODELS #
 ####################
 # Bird observations
@@ -264,72 +258,121 @@ Sys.time() - start
 summ <- apply(rand, 2, function(x) c(mean = mean(x, na.rm = TRUE),
                                      quantile(x, c(0.025, 0.975), na.rm = TRUE)))
 summ
-
-
-
-
-
-
-
-bird.obs.nb <- glmer.nb(count~treatment+ (1|site), 
-                 	data=bird.obs) 
-sim.bird.obs.nb <- simulateResiduals(fittedModel = bird.obs.nb, n = 250)
-plot(sim.bird.obs.nb)
-
-bird.obs.nb.zi <- glmmTMB(count~treatment+ (1|site), 
-                      family=nbinom1, 
-                      zi=~1, 
-                      data=bird.obs)
-sim.bird.obs.nb.zi <- simulateResiduals(fittedModel = bird.obs.nb.zi, n = 250)
-plot(sim.bird.obs.nb.zi)
-Anova(bird.obs.nb.zi)
-
-bird.obs.pois.zi <- glmmTMB(count~treatment+ (1|site), 
-                      family=poisson, 
-                      zi=~1, 
-                      data=bird.obs)
-sim.bird.obs.pois.zi <- simulateResiduals(fittedModel = bird.obs.pois.zi, n = 250)
-plot(sim.bird.obs.pois.zi)
-Anova(bird.obs.pois.zi)
-
-
+####################
 # BIRD RICH MODELS #
 ####################
-# GLMM
-glmm.bird.rich <- glmer(richness ~ treatment + (1|sites),
-												data=bird.rich, family=poisson)
-sim.glmm.bird.rich <- simulateResiduals(fittedModel = glmm.bird.rich, n = 250)
-plot(sim.glmm.bird.rich) # fails dispersion
+bird.rich.lm <- lmer(richness~treatment + (1|sites), data = bird.rich)
+anova(bird.rich.lm)
+qqnorm(resid(bird.rich.lm))
 
-# OD GLMM
-bird.rich$obs <- 1:length(bird.rich$sites)
-glmm.ovd.bird.rich <- glmer(richness ~ treatment + (1|sites) + (1|obs),
-												data=bird.rich, family=poisson)
-sim.glmm.ovd.bird.rich <- simulateResiduals(fittedModel = glmm.ovd.bird.rich, n = 250)
-plot(sim.glmm.ovd.bird.rich)
-hist(sim.glmm.ovd.bird.rich)
+Betas <- fixef(bird.rich.lm)
+SE <- sqrt(diag(vcov(bird.rich.lm)))
+pval <- 2 * pnorm(-abs(Betas / SE))
+Output <- cbind(Betas, SE, pval)
+print(Output, digits = 3)
 
-Anova(glmm.ovd.bird.rich)
+Resid <- resid(bird.rich.lm)
+Fitted <- fitted(bird.rich.lm)
 
+# Checking values given by fitted
+Betas <- fixef(bird.rich.lm)
+X <- model.matrix(bird.rich.lm)
+FitManual <- X %*% Betas
+RE <- ranef(bird.rich.lm)$sites$'(Intercept)'
+ALLRE <- RE[as.numeric(bird.rich$sites)]
+FitManual + ALLRE - fitted(bird.rich.lm)
+
+# Checking assumptions
+# Zurr says these residuals should be normalized but the objects
+# called in Sigmas <- as.numeric(summary(bird.rich.lm@REmat[,4]))
+# do not exist
+
+plot(richness ~ as.numeric(treatment), 
+     data = bird.rich)
+plot(residuals(bird.rich.lm) ~ as.numeric(bird.rich$treatment))
+abline(a = 0, b = 0, col = "blue", lwd = 2)
+hist(residuals(bird.rich.lm))
+
+resfit <- resid(bird.rich.lm)
+hist(resfit)
+plot(bird.rich$rich, resfit, 
+     ylab = "Residuals", 
+     xlab = "Richness") 
+abline(0, 0) # better than poisson model but not perfect
+
+# LRT
+bird.rich.lm <- lmer(richness~treatment + (1|sites), 
+                     data = bird.rich, REML = TRUE)
+bird.rich.lm.null <- update(bird.rich.lm, .~. - treatment)
+anova(bird.rich.lm,bird.rich.lm.null)
+
+####################
 # SEED OBS MODELS #
 ####################
-# Poisson zero inflated
-poisZI.seeds.obs <- glmmTMB(SEEDS~TREATMENT+
-                        (1|BLOCK), 
-                      family=poisson, 
-                      zi=~1, 
-                      data=seed.obs)
-sim.poisZI.seeds.obs <- simulateResiduals(fittedModel = poisZI.seeds.obs, n = 250)
-plot(sim.poisZI.seeds.obs)
-Anova(poisZI.seeds.obs)
+# neg binom fit
+seeds.obs.fit.nb <- glmer.nb(SEEDS ~ TREATMENT + (1 | BLOCK),
+                             data = seed.obs)
+# poisson fit
+seed.obs.fit.pois <- glmer(SEEDS ~ TREATMENT + (1 | BLOCK),
+                            data = seed.obs, family = poisson(link = "log"))
+glmmPQL(SEEDS ~ TREATMENT, random = ~1|BLOCK,
+        data = seed.obs, family = poisson(link = "log"))
 
+# check some assumptions
+plot(SEEDS ~ as.numeric(TREATMENT), 
+     data = seed.obs)
+plot(residuals(seeds.obs.fit.nb) ~ as.numeric(seed.obs$TREATMENT))
+abline(a = 0, b = 0, col = "blue", lwd = 2)
+plot(residuals(seed.obs.fit.pois) ~ as.numeric(seed.obs$TREATMENT))
+abline(a = 0, b = 0, col = "blue", lwd = 2)
+hist(residuals(seeds.obs.fit.nb))
+hist(residuals(seed.obs.fit.pois))
+# plot residuals from prediction to test for assumptions
+resfit <- resid(seeds.obs.fit.nb)
+resfit <- resid(seed.obs.fit.pois)
+hist(resfit)
+plot(seed.obs$SEEDS, resfit, 
+     ylab = "Residuals", 
+     xlab = "Count") 
+abline(0, 0)        
+#' we do not meet the following assumptions based on our residual plots:
+#' - normality N
+#' - linearity Y
+#' - homoscedasticity N
+#' - no autocorrelation N
+
+####################
 # SEED RICH MODELS #
 ####################
-poisZI.seed.rich <- glmmTMB(richness~treatment+
-                        (1|sites), 
-                      family=poisson, 
-                      zi=~1, 
-                      data=seed.rich)
-sim.poisZI.seed.rich <- simulateResiduals(fittedModel = poisZI.seed.rich, n = 250)
-plot(sim.poisZI.seed.rich)
-Anova(poisZI.seed.rich)
+# neg binom fit
+seeds.rich.fit.nb <- glmer.nb(richness ~ treatment + (1 | sites),
+                             data = seed.rich) # iteration limit reached
+# poisson fit
+seeds.rich.fit.pois <- glmer(richness ~ treatment + (1 | sites),
+                            data = seed.rich, family = poisson(link = "log"))
+glmmPQL(richness ~ treatment, random = ~1|sites,
+        data = seed.rich, family = poisson(link = "log"))
+
+# check some assumptions
+plot(richness ~ as.numeric(treatment), 
+     data = seed.rich)
+plot(residuals(seeds.rich.fit.nb) ~ as.numeric(seed.rich$treatment))
+abline(a = 0, b = 0, col = "blue", lwd = 2)
+plot(residuals(seeds.rich.fit.pois) ~ as.numeric(seed.rich$treatment))
+abline(a = 0, b = 0, col = "blue", lwd = 2)
+hist(residuals(seeds.rich.fit.nb))
+hist(residuals(seeds.rich.fit.pois))
+# plot residuals from prediction to test for assumptions
+resfit <- resid(seeds.rich.fit.nb)
+resfit <- resid(seeds.rich.fit.pois)
+hist(resfit)
+plot(seed.rich$richness, resfit, 
+     ylab = "Residuals", 
+     xlab = "Richness") 
+abline(0, 0)        
+#' we do not meet the following assumptions based on our residual plots:
+#' - normality N
+#' - linearity Y
+#' - homoscedasticity N
+#' - no autocorrelation N
+
