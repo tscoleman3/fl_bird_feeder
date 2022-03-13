@@ -329,6 +329,7 @@ plot(residuals(seed.obs.fit.pois) ~ as.numeric(seed.obs$TREATMENT))
 abline(a = 0, b = 0, col = "blue", lwd = 2)
 hist(residuals(seeds.obs.fit.nb))
 hist(residuals(seed.obs.fit.pois))
+
 # plot residuals from prediction to test for assumptions
 resfit <- resid(seeds.obs.fit.nb)
 resfit <- resid(seed.obs.fit.pois)
@@ -337,11 +338,92 @@ plot(seed.obs$SEEDS, resfit,
      ylab = "Residuals", 
      xlab = "Count") 
 abline(0, 0)        
+
 #' we do not meet the following assumptions based on our residual plots:
 #' - normality N
 #' - linearity Y
 #' - homoscedasticity N
 #' - no autocorrelation N
+
+# Trying a zero-inflation model
+library("performance")
+check_zeroinflation(seeds.obs.fit.nb) # error
+check_zeroinflation(seed.obs.fit.pois) # probably zero-inflation
+
+# Zero-inflation fit
+library(glmmTMB)
+seed.obs.fit.pois.ZI <- glmmTMB(SEEDS ~ TREATMENT + (1 | BLOCK),
+                                family = poisson,
+                                zi=~TREATMENT,
+                                data=seed.obs)
+  
+summary(seed.obs.fit.pois.ZI)
+
+# Looking at simulated residuals
+sim.seed.obs.fit.pois.ZI <- simulateResiduals(fittedModel = seed.obs.fit.pois.ZI,
+                                              n = 250)
+plot(sim.seed.obs.fit.pois.ZI)
+
+# check some assumptions
+plot(SEEDS ~ as.numeric(TREATMENT), 
+     data = seed.obs)
+plot(residuals(seeds.obs.fit.nb) ~ as.numeric(seed.obs$TREATMENT))
+abline(a = 0, b = 0, col = "blue", lwd = 2)
+plot(residuals(seed.obs.fit.pois) ~ as.numeric(seed.obs$TREATMENT))
+abline(a = 0, b = 0, col = "blue", lwd = 2)
+hist(residuals(seeds.obs.fit.nb))
+hist(residuals(seed.obs.fit.pois))
+
+# plot residuals from prediction to test for assumptions
+resfit <- resid(seed.obs.fit.pois.ZI)
+hist(resfit)
+plot(seed.obs$SEEDS, resfit, 
+     ylab = "Residuals", 
+     xlab = "Count") 
+abline(0, 0)        
+
+#' we do not meet the following assumptions based on our residual plots:
+#' - normality N but better
+#' - linearity Y
+#' - homoscedasticity N but better
+#' - no autocorrelation N but better
+
+# look at predictions 
+preds.pois <- predict(seed.obs.fit.pois.ZI)
+par(mfrow = c(1, 2))
+plot(SEEDS ~ as.numeric(TREATMENT), 
+     data = seed.obs)
+plot(preds.pois ~ as.numeric(seed.obs$TREATMENT))
+
+# look at predictions from model
+# poisson
+predict(seed.obs.fit.pois.ZI)
+seed.obs$pred = exp(predict(seed.obs.fit.pois.ZI))
+seed.obs$predicted = predict(seed.obs.fit.pois.ZI)    # save the predicted values
+seed.obs$residuals = residuals(seed.obs.fit.pois.ZI)  # save the residual values
+
+# quick look at the actual, predicted, and residual values
+pred_df <- seed.obs %>% 
+  dplyr::select(SEEDS, predicted, residuals)
+pred_df$predicted = exp(pred_df$predicted)
+pred_df$residuals = exp(pred_df$residuals)
+plot(fitted(seed.obs.fit.pois.ZI) ~ seed.obs$SEEDS)
+abline(0, 1, col = "blue", lwd = 2)
+
+# look at our coefs 
+summary(seed.obs.fit.pois.ZI)
+# anova(seed.obs.fit.pois.ZI) not appropriate for ZI
+Anova(seed.obs.fit.pois.ZI, type = "III") # Not the right Anova?
+
+# RUNNING INTO PROBLEMS HERE #
+
+coefs <- summary(seed.obs.fit.pois.ZI)$coef
+coefs_est <- exp(coefs[, "Estimate"])
+uprs <- exp(coefs[, "Estimate"] + 1.96 * coefs[, "Std. Error"])
+lwrs <- exp(coefs[, "Estimate"] - 1.96 * coefs[, "Std. Error"])
+(uprs - 1) * 100       # upr CI %'s
+(coefs_est - 1) * 100  # coefficient estimates CI %'s
+(lwrs - 1) * 100       # lwr CI %'s
 
 ####################
 # SEED RICH MODELS #
@@ -377,4 +459,79 @@ abline(0, 0)
 #' - linearity Y
 #' - homoscedasticity N
 #' - no autocorrelation N
+
+# Trying a zero-inflation model
+library("performance")
+check_zeroinflation(seeds.rich.fit.pois) # probably zero-inflation
+
+library(glmmTMB)
+## Poisson with Zero Inflation (note no overdispersion). 
+# Is it enough to account for zero inflation without correcting for overdispersion? 
+seeds.rich.fit.pois.ZI <- glmmTMB(richness ~ treatment + (1 | sites),
+                                family = poisson,
+                                zi=~treatment,
+                                data=seed.rich)
+
+summary(seeds.rich.fit.pois.ZI)
+
+sim.seeds.rich.fit.pois.ZI <- simulateResiduals(fittedModel = seeds.rich.fit.pois.ZI,
+                                              n = 250)
+plot(sim.seeds.rich.fit.pois.ZI) # Quantile deviations detected
+# we are modeling a unimodal relationship as a linear process
+
+# check some assumptions
+plot(richness ~ as.numeric(treatment), 
+     data = seed.rich)
+plot(residuals(seeds.rich.fit.pois.ZI) ~ as.numeric(seed.rich$treatment))
+abline(a = 0, b = 0, col = "blue", lwd = 2)
+hist(residuals(seeds.rich.fit.pois.ZI))
+# plot residuals from prediction to test for assumptions
+resfit <- resid(seeds.rich.fit.pois.ZI)
+hist(resfit)
+plot(seed.rich$richness, resfit, 
+     ylab = "Residuals", 
+     xlab = "Count") 
+abline(0, 0)        
+#' we do not meet the following assumptions based on our residual plots:
+#' - normality Y 
+#' - linearity Y
+#' - homoscedasticity Y 
+#' - no autocorrelation N but better
+
+# look at predictions 
+preds.pois <- predict(seeds.rich.fit.pois.ZI)
+par(mfrow = c(1, 2))
+plot(richness ~ as.numeric(treatment), 
+     data = seed.rich)
+plot(preds.pois ~ as.numeric(seed.rich$treatment))
+
+# look at predictions from model
+# poisson
+predict(seeds.rich.fit.pois.ZI)
+seed.rich$pred = exp(predict(seeds.rich.fit.pois.ZI))
+seed.rich$predicted = predict(seeds.rich.fit.pois.ZI)    # save the predicted values
+seed.rich$residuals = residuals(seeds.rich.fit.pois.ZI)  # save the residual values
+
+# quick look at the actual, predicted, and residual values
+pred_df <- seed.rich %>% 
+  dplyr::select(richness, predicted, residuals)
+pred_df$predicted = exp(pred_df$predicted)
+pred_df$residuals = exp(pred_df$residuals)
+plot(fitted(seeds.rich.fit.pois.ZI) ~ seed.rich$richness)
+abline(0, 1, col = "blue", lwd = 2)
+
+# look at our coefs 
+summary(seeds.rich.fit.pois.ZI)
+# anova(seed.obs.fit.pois.ZI) not appropriate for ZI
+Anova(seeds.rich.fit.pois.ZI, type = "III") # NEED TO CHECK IF APPROPRIATE
+
+# RUNNING INTO PROBLEMS HERE #
+
+coefs <- summary(seed.obs.fit.pois.ZI)$coef
+coefs_est <- exp(coefs[, "Estimate"])
+uprs <- exp(coefs[, "Estimate"] + 1.96 * coefs[, "Std. Error"])
+lwrs <- exp(coefs[, "Estimate"] - 1.96 * coefs[, "Std. Error"])
+(uprs - 1) * 100       # upr CI %'s
+(coefs_est - 1) * 100  # coefficient estimates CI %'s
+(lwrs - 1) * 100       # lwr CI %'s
 
