@@ -367,12 +367,9 @@ plot(sim.seed.obs.fit.pois.ZI)
 # check some assumptions
 plot(SEEDS ~ as.numeric(TREATMENT), 
      data = seed.obs)
-plot(residuals(seeds.obs.fit.nb) ~ as.numeric(seed.obs$TREATMENT))
+plot(residuals(seed.obs.fit.pois.ZI) ~ as.numeric(seed.obs$TREATMENT))
 abline(a = 0, b = 0, col = "blue", lwd = 2)
-plot(residuals(seed.obs.fit.pois) ~ as.numeric(seed.obs$TREATMENT))
-abline(a = 0, b = 0, col = "blue", lwd = 2)
-hist(residuals(seeds.obs.fit.nb))
-hist(residuals(seed.obs.fit.pois))
+hist(residuals(seed.obs.fit.pois.ZI))
 
 # plot residuals from prediction to test for assumptions
 resfit <- resid(seed.obs.fit.pois.ZI)
