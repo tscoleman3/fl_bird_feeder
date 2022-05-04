@@ -1,0 +1,225 @@
+---
+title: "script4-markdown"
+author: "David S, Mason"
+date: "5/3/2022"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+# Load packages
+library(tidyverse)
+library(lme4)
+library(lubridate)
+library(lmerTest)
+library(emmeans)
+library(car)
+library(MuMIn)
+library(agridat)
+library(DHARMa)
+library(glmmTMB)
+library(fitdistrplus)
+library(mvabund)
+
+# Bring in the data
+seeds <- read.csv(file = "data/seed_traps2.0.csv",
+                        header = TRUE, stringsAsFactors = FALSE)
+
+```
+
+## Conducting manyGLMs with the full community matrix
+
+```{r, include = FALSE}
+# Separate the community data from the predictor variables
+comm.mat <- seeds[,5:35]
+comm.mat.mv <- mvabund(seeds[,5:35])
+predictors <- seeds[,1:4]
+
+# Run simple models
+m1 <- manyglm(comm.mat.mv ~ predictors$TREATMENT,
+              family = "negative_binomial")
+
+m2 <- manyglm(comm.mat.mv ~ predictors$TREATMENT + (1|predictors$BLOCK),
+              family = "negative_binomial")
+
+# Convert date to a dummy variable
+predictors$DATE.ORD <- NA
+for(i in 1:nrow(predictors)){
+  if(predictors$DATE[i] == "2020-11-27"){
+    predictors$DATE.ORD[i] <- 1
+  }
+  if(predictors$DATE[i] == "2020-12-04"){
+    predictors$DATE.ORD[i] <- 2
+  }
+  if(predictors$DATE[i] == "2020-12-11"){
+    predictors$DATE.ORD[i] <- 3
+  }
+  if(predictors$DATE[i] == "2021-01-02"){
+    predictors$DATE.ORD[i] <- 4
+  }
+  if(predictors$DATE[i] == "2021-02-03"){
+    predictors$DATE.ORD[i] <- 5
+  }
+} 
+```
+
+## Run the nested model
+
+```{r}
+m4 <- manyglm(comm.mat.mv ~ predictors$TREATMENT + (1|predictors$BLOCK/predictors$DATE.ORD), 
+              family = "negative_binomial")
+
+plot(m4)
+anova(m4, p.uni = "adjusted")
+```
+
+## Model for seed richness time series
+
+# First calculate richness
+```{r, include = FALSE}
+# Convert species matrix to presence absence
+library(vegan)
+comm.mat.pa <- decostand(comm.mat, "pa")
+
+# Bring back the predictor variables
+seeds <- cbind(predictors[,1:4], comm.mat.pa)
+
+# Calculate richness 
+seeds$RICH <- NA
+for(i in 1:nrow(seeds)){
+  seeds$RICH[i] <- sum(seeds[i,5:35])
+}  
+
+# Convert treatment to an ordinal variable
+seeds$TREATMENT.NUMB <- NA
+for(i in 1:nrow(seeds)){
+  if(seeds$TREATMENT[i] == "Control"){
+    seeds$TREATMENT.NUMB[i] <- 0
+  }
+  if(seeds$TREATMENT[i] == "Low"){
+    seeds$TREATMENT.NUMB[i] <- 4
+  }
+  if(seeds$TREATMENT[i] == "Medium"){
+    seeds$TREATMENT.NUMB[i] <- 8
+  }
+  if(seeds$TREATMENT[i] == "High"){
+    seeds$TREATMENT.NUMB[i] <- 12
+  }
+}
+
+is.numeric(seeds$TREATMENT.NUMB)
+
+# Convert date to a dummy variable
+seeds$DATE.ORD <- NA
+for(i in 1:nrow(seeds)){
+  if(seeds$DATE[i] == "2020-11-27"){
+    seeds$DATE.ORD[i] <- 1
+  }
+  if(seeds$DATE[i] == "2020-12-04"){
+    seeds$DATE.ORD[i] <- 2
+  }
+  if(seeds$DATE[i] == "2020-12-11"){
+    seeds$DATE.ORD[i] <- 3
+  }
+  if(seeds$DATE[i] == "2021-01-02"){
+    seeds$DATE.ORD[i] <- 4
+  }
+  if(seeds$DATE[i] == "2021-02-03"){
+    seeds$DATE.ORD[i] <- 5
+  }
+}
+
+seeds$DATE.ORD <- factor(seeds$DATE.ORD, order = TRUE,
+                     levels = c(1,2,3,4,5))
+```
+
+# Plot distribution
+
+```{r}
+plotdist(seeds$RICH, histo = TRUE, demp = TRUE)
+descdist(seeds$RICH, discrete=TRUE, boot=500) # NB
+```
+
+# Run model
+
+```{r}
+m6 <- glmmTMB(RICH ~ TREATMENT.NUMB + (1|BLOCK/DATE.ORD),
+              data = seeds, family = nbinom2(link = "log"))
+sim_m6 <- simulateResiduals(fittedModel = m6, n = 250)
+plot(sim_m6)
+
+car::Anova(m6)
+```
+
+## Model for seed detections time series
+
+# First calculate detections
+```{r, include = FALSE}
+# Reconstitute the seed dataframe
+seeds <- cbind(predictors[,1:4], comm.mat)
+seeds$DETECTIONS <- NA
+
+# Calculate detections 
+for(i in 1:nrow(seeds)){
+  seeds$DETECTIONS[i] <- sum(seeds[i,5:35])
+}  
+
+# Convert treatment to an ordinal variable
+seeds$TREATMENT.NUMB <- NA
+for(i in 1:nrow(seeds)){
+  if(seeds$TREATMENT[i] == "Control"){
+    seeds$TREATMENT.NUMB[i] <- 0
+  }
+  if(seeds$TREATMENT[i] == "Low"){
+    seeds$TREATMENT.NUMB[i] <- 4
+  }
+  if(seeds$TREATMENT[i] == "Medium"){
+    seeds$TREATMENT.NUMB[i] <- 8
+  }
+  if(seeds$TREATMENT[i] == "High"){
+    seeds$TREATMENT.NUMB[i] <- 12
+  }
+}
+
+# Convert date to a dummy variable
+seeds$DATE.ORD <- NA
+for(i in 1:nrow(seeds)){
+  if(seeds$DATE[i] == "2020-11-27"){
+    seeds$DATE.ORD[i] <- 1
+  }
+  if(seeds$DATE[i] == "2020-12-04"){
+    seeds$DATE.ORD[i] <- 2
+  }
+  if(seeds$DATE[i] == "2020-12-11"){
+    seeds$DATE.ORD[i] <- 3
+  }
+  if(seeds$DATE[i] == "2021-01-02"){
+    seeds$DATE.ORD[i] <- 4
+  }
+  if(seeds$DATE[i] == "2021-02-03"){
+    seeds$DATE.ORD[i] <- 5
+  }
+}
+
+seeds$DATE.ORD <- factor(seeds$DATE.ORD, order = TRUE,
+                         levels = c(1,2,3,4,5))
+```
+# Plot distribution
+
+```{r}
+plotdist(seeds$DETECTIONS, histo = TRUE, demp = TRUE)
+descdist(seeds$DETECTIONS, discrete=TRUE, boot=500) # NB
+```
+
+# Run model
+
+```{r}
+m7 <- glmmTMB(DETECTIONS ~ TREATMENT.NUMB + (1|BLOCK/DATE.ORD),
+              data = seeds, family = nbinom2(link = "log"))
+sim_m7 <- simulateResiduals(fittedModel = m7, n = 250)
+plot(sim_m7)
+
+car::Anova(m7)
+```
