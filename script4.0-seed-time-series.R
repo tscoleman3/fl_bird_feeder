@@ -26,6 +26,13 @@ library(glmmTMB)
 library(fitdistrplus)
 library(mvabund)
 
+# fall burning ,frequent burning, herbivore
+# go in andnkill with herbicide, should do a good job controlling it.
+# absolutely correct, you can burn very frequerntly in the traditional 
+# dormant nd early growing season and not reeduce abundance in perpetuity.
+
+# historically part of community. not aware of it being more or less dominant. check bartram.
+
 # Bring in the data
 seeds <- read.csv(file = "data/seed_traps2.0.csv",
                         header = TRUE, stringsAsFactors = FALSE)
@@ -139,6 +146,20 @@ sim_m6 <- simulateResiduals(fittedModel = m6, n = 250)
 plot(sim_m6)
 
 car::Anova(m6)
+
+# Calculate summary stats
+
+seeds %>% 
+  group_by(TREATMENT) %>% 
+  summarize(RICHNESS = mean(RICH),
+            SD = sd(RICH))
+
+emtrends(m6, ~ TREATMENT.NUMB, var = "TREATMENT.NUMB", transform = "response")
+
+emmeans(m6, ~TREATMENT,
+        transform = "response"
+)
+
 ## --------------- TOTAL DETECTIONS --------------------------------------------
 
 # Reconstitute the seed dataframe
@@ -195,9 +216,46 @@ plotdist(seeds$DETECTIONS, histo = TRUE, demp = TRUE)
 descdist(seeds$DETECTIONS, discrete=TRUE, boot=500) # NB
 
 # Calculate 
-m7 <- glmmTMB(DETECTIONS ~ TREATMENT.NUMB + (1|BLOCK/DATE.ORD),
+m7 <- glmmTMB(DETECTIONS ~ TREATMENT + (1|BLOCK/DATE.ORD),
               data = seeds, family = nbinom2(link = "log"))
 sim_m7 <- simulateResiduals(fittedModel = m7, n = 250)
 plot(sim_m7)
 
 car::Anova(m7)
+
+seeds %>% 
+  group_by(TREATMENT) %>% 
+  summarize(DETECT = mean(DETECTIONS),
+            SD = sd(DETECTIONS))
+
+emtrends(m7, ~ TREATMENT.NUMB, var = "TREATMENT.NUMB", transform = "response")
+
+emmeans(m7, ~TREATMENT,
+        transform = "response"
+)
+
+## --------------- PRELIMINARY DATA --------------------------------------------
+
+
+# prelim.seed.dat are from the baited vs un-baited feeders effect on seed count
+prelim <- read.csv("data/initial_feeder.csv",
+                                header = TRUE)
+
+# Plot distribution
+plotdist(prelim$rawseeds, histo = TRUE, demp = TRUE)
+descdist(prelim$rawseeds, discrete=TRUE, boot=500) # NB/poisson
+
+m8 <- glmmTMB(rawseeds ~ Treatment + (1|time/pair),
+              data = prelim, family = nbinom2(link = "log"))
+
+m8 <- glmer(rawseeds ~ Treatment + (1|pair),
+            data = prelim, family = "poisson")
+
+sim_m8 <- simulateResiduals(fittedModel = m8, n = 250)
+plot(sim_m8)
+
+car::Anova(m8)
+
+emmeans(m8, ~Treatment,
+        transform = "response"
+)

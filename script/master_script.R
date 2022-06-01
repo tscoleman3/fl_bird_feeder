@@ -37,7 +37,7 @@ raw.seed.dat <- read.csv("data/seed_traps2.0.csv",
 head(raw.seed.dat)
 
 # prelim.seed.dat are from the baited vs un-baited feeders effect on seed count
-raw.prelim.seed.dat <- read.csv("data/feeder_all.csv",
+raw.prelim.seed.dat <- read.csv("data/initial_feeder.csv",
                             header = TRUE)
 head(raw.prelim.seed.dat)
 
@@ -226,6 +226,13 @@ seed.rich <- as.data.frame(seed.rich) %>%
   dplyr::rename(site = V1, treatment = V2, richness = richness) %>% 
   dplyr::select(treatment, site, richness)
 seed.rich
+
+# Summary stats
+
+bird %>% 
+  group_by(treatment) %>% 
+  summarize(dat = mean_se(rich))
+  
 
 ########################################################################################################################################
 ########################################################################################################################################
