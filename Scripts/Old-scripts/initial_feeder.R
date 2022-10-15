@@ -7,6 +7,11 @@ d <- read.csv("data/initial_feeder.csv")
 library(fitdistrplus)
 library(lme4)
 library(tidyverse)
+library(car)
+library(DHARMa)
+
+
+
 
 # Visualize the data ####
 boxplot(Seeds ~ Treatment,col=c("white","lightgray"), outline = TRUE, d)
@@ -19,11 +24,35 @@ descdist(d$rawseeds, discrete=TRUE, boot=500) # NB or poisson
 # neg binom fit
 seeds.fit.nb <- glmer.nb(rawseeds ~ Treatment + (1 | time/pair),
                              data = d)
+
 summary(seeds.fit.nb)
+Anova(seeds.fit.nb)
 # poisson fit
-seeds.fit.pois <- glmer(rawseeds ~ Treatment + (1 | time/pair),
+seeds.fit.pois <- glmer(rawseeds ~ Treatment + time + (1 | pair),
                             data = d, family = poisson(link = "log"))
-summary(seeds.fit.pois) # throwing up singular error
+summary(seeds.fit.pois)
+Anova(seeds.fit.pois)
+
+E1 <- resid(seeds.fit.pois, type = "pearson")
+N <- nrow(d)
+p <- length(fixef(seeds.fit.pois)) + 1
+overdispersion <- sum(E1^2) / (N-p)
+
+d <- d[-c(17,18),]
+
+plotdist(d$rawseeds, histo = TRUE, demp = TRUE)
+descdist(d$rawseeds, discrete=TRUE, boot=500) # NB or poisson
+
+seeds.fit.pois <- glmer(rawseeds ~ Treatment + time + (1 | pair),
+                        data = d, family = poisson(link = "log"))
+summary(seeds.fit.pois)
+Anova(seeds.fit.pois)
+
+E1 <- resid(seeds.fit.pois, type = "pearson")
+N <- nrow(d)
+p <- length(fixef(seeds.fit.pois)) + 1
+overdispersion <- sum(E1^2) / (N-p)
+overdispersion
 
 # check some assumptions
 plot(rawseeds ~ Treatment, data = d)
@@ -93,13 +122,13 @@ segments(1:7, lwrs[1:2], 1:7, uprs[1:2])
 
 coefs.fix <- fixef(seeds.fit.pois)
 exp(coefs.fix[1])
+exp(coefs.fix[2])
 
 
 coefs_func <- function(.) {
   beta <- unname(fixef(.))
-  
   control <- exp(beta[1])             # mean count for control 
-  treat <-  exp(beta[1] + beta[2])   # mean count for treat 1 is this much greater than control
+  treat <-  exp(beta[1] - beta[2])   # mean count for treat 1 is this much greater than control
   c(control_mu = control, treat = treat)
   
 }
@@ -112,6 +141,10 @@ summ <- apply(rand, 2, function(x) c(mean = mean(x, na.rm = TRUE),
                                      quantile(x, c(0.025, 0.975), na.rm = TRUE)))
 summ # these are backwards at the moment
 
+write.csv(summ, "data/initial-feeder-mod-coeff.csv", row.names = FALSE)
+
+library(MuMIn)
+r.squaredGLMM(seeds.fit.pois)
 
 # OLD #######
 # Build a model 
