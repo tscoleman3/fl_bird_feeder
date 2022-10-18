@@ -137,8 +137,8 @@ descdist(seeds$RICH, discrete=TRUE, boot=500) # NB/poisson
 seeds.rich.nb <- glmer.nb(RICH ~ TREATMENT * DATE.ORD + (1|BLOCK),
             data = seeds) 
 
-seeds.rich.nb <- glmer(RICH ~ TREATMENT * EXP.DAYS + (1|BLOCK),
-                          family = 'poisson', data = seeds) 
+# seeds.rich.nb <- glmer(RICH ~ TREATMENT * EXP.DAYS + (1|BLOCK),
+                          # family = 'poisson', data = seeds) 
 
 # Predictions are funnel shaped when using treatment as an ordinal variable
 # Model fail assumptions using poisson with factored treatment
@@ -203,11 +203,22 @@ check_zeroinflation(seeds.rich.nb)
 
 emmeans(seeds.rich.nb, pairwise ~TREATMENT, type = 'response')
 
-emtrends(seeds.rich.nb, pairwise ~ TREATMENT, var = "DATE.ORD")
-emtrends(seeds.rich.nb, pairwise ~ TREATMENT, var = "EXP.DAYS")
+emtrends(seeds.rich.nb, pairwise ~ TREATMENT, var = "DATE.ORD", type = 'response')
+# emtrends(seeds.rich.nb, pairwise ~ TREATMENT, var = "EXP.DAYS")
 
-emmip(seeds.rich.nb, TREATMENT ~ DATE.ORD, cov.reduce = range)
-emmip(seeds.rich.nb, TREATMENT ~ EXP.DAYS, cov.reduce = range)
+cols <- c("darkgray", "#00A9FF", "#00BF7D",  "#FF61CC")
+emmip(seeds.rich.nb, TREATMENT ~ DATE.ORD, 
+      cov.reduce = range, CIs = TRUE, type = 'response',
+      style = 'factor')+
+  ylab(expression(paste("Fitted mean seed richness", " (m"^{2}, ")")))+
+  xlab('')+
+  scale_x_discrete(labels = c("Sample 1", "Sample 5"))+
+  theme_bw()+
+  theme(text = element_text(size = 20),
+        legend.position = "none")+
+  theme(axis.text = element_text(face="bold"))+
+  scale_color_manual(values=cols)
 
-ggplot(seeds, aes(x = as_factor(DATE)))
+ggsave("Figures/Experiment-2-seed-rich.png", width = 5, height = 7, units = "in")
+
 

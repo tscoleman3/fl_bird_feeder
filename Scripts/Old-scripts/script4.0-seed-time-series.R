@@ -26,12 +26,8 @@ library(glmmTMB)
 library(fitdistrplus)
 library(mvabund)
 
-# fall burning ,frequent burning, herbivore
-# go in andnkill with herbicide, should do a good job controlling it.
-# absolutely correct, you can burn very frequerntly in the traditional 
-# dormant nd early growing season and not reeduce abundance in perpetuity.
-
-# historically part of community. not aware of it being more or less dominant. check bartram.
+# Clear the decks
+rm(list=ls())
 
 # Bring in the data
 seeds <- read.csv(file = "data/seed_traps2.0.csv",
@@ -72,11 +68,11 @@ for(i in 1:nrow(predictors)){
 } 
 
 # Run nested model
-m4 <- manyglm(comm.mat.mv ~ predictors$TREATMENT + (1|predictors$BLOCK/predictors$DATE.ORD), 
+m4 <- manyglm(comm.mat.mv ~ predictors$TREATMENT +(1 | predictors$DATE.ORD/predictors$BLOCK), 
               family = "negative_binomial")
 
 plot(m4)
-anova(m4, p.uni = "adjusted")
+anova.manyglm(m4, p.uni = "adjusted")
 
 ## --------------- RICHNESS ----------------------------------------------------
 
@@ -140,12 +136,24 @@ plotdist(seeds$RICH, histo = TRUE, demp = TRUE)
 descdist(seeds$RICH, discrete=TRUE, boot=500) # NB
 
 # Calculate 
-m6 <- glmmTMB(RICH ~ TREATMENT.NUMB + (1|BLOCK/DATE.ORD),
+m6 <- glmmTMB(RICH ~ TREATMENT.NUMB + (1|DATE.ORD/BLOCK),
               data = seeds, family = nbinom2(link = "log"))
+m7 <- glmmTMB(RICH ~ TREATMENT.NUMB + (1|DATE.ORD/BLOCK),
+              data = seeds, family = poisson(link = "log"))
 sim_m6 <- simulateResiduals(fittedModel = m6, n = 250)
 plot(sim_m6)
+sim_m7 <- simulateResiduals(fittedModel = m7, n = 250)
+plot(sim_m7)
 
 car::Anova(m6)
+car::Anova(m7)
+
+# Check overdispersion
+E1 <- resid(m7, type = "pearson")
+N <- nrow(seeds)
+p <- length(fixef(m7)) + 1
+overdispersion <- sum(E1^2) / (N-p)
+overdispersion # Better
 
 # Calculate summary stats
 
@@ -159,6 +167,8 @@ emtrends(m6, ~ TREATMENT.NUMB, var = "TREATMENT.NUMB", transform = "response")
 emmeans(m6, ~TREATMENT,
         transform = "response"
 )
+
+
 
 ## --------------- TOTAL DETECTIONS --------------------------------------------
 
