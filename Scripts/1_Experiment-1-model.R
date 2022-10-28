@@ -1,5 +1,5 @@
 ## --------------- HEADER ------------------------------------------------------
-## Script name: 1_Experiment-1-model.R
+## Script name: 1a_Experiment-1-model.R
 ## Author: David S. Mason, UF D.E.E.R. Lab
 ## Department: Wildlife Ecology and Conservation
 ## Affiliaton: University of Florida

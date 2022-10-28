@@ -1,5 +1,5 @@
 ## --------------- HEADER ------------------------------------------------------
-## Script name: 1_Experiment-1-model.R
+## Script name: 4_Experiment-2-seed-rich.R
 ## Author: David S. Mason, UF D.E.E.R. Lab
 ## Department: Wildlife Ecology and Conservation
 ## Affiliaton: University of Florida
@@ -8,7 +8,7 @@
 ## Copyright (c) David S. Mason, 2022
 ## Contact: masond@ufl.edu, @EcoGraffito
 ## Purpose of script: This script analyzes the seed collection data for 
-## experiment 1
+## experiment 2
 
 ## --------------- Set up workspace --------------------------------------------
 
@@ -21,6 +21,7 @@ library(lattice)
 library(MuMIn)
 library(emmeans)
 library(vegan)
+library(lubridate)
 
 # Clear the deck
 rm(list = ls())
@@ -113,8 +114,9 @@ for(i in 1:nrow(seeds)){
   }
 }
 
-seeds$BLOCK <- as_factor(seeds$BLOCK)
-seeds$TRAP <- as_factor(seeds$TRAP)
+library('forcats')
+seeds$BLOCK <- forcats::as_factor(seeds$BLOCK)
+seeds$TRAP <- forcats::as_factor(seeds$TRAP)
 
 seeds$TREATMENT <- factor(seeds$TREATMENT, order = TRUE,
                              levels = c('Control', 'Low', 'Medium', 'High'))
@@ -199,9 +201,32 @@ abline(0, 1, col = "blue", lwd = 2)
 library('performance')
 check_zeroinflation(seeds.rich.nb) 
 
+## --------------- Export model validation -------------------------------------
+E1 <- resid(seeds.rich.nb, type = 'pearson')
+F1 <- fitted(seeds.rich.nb, type = 'response')
+
+png("Figures/Experiment-2-seed-rich-model-validation.png", 
+    width = 800, height = 800, units = "px")
+
+par(mfrow = c(2,2), mar = c(5,5,2,2))
+plot(x = F1, y = E1, xlab = "Fitted values", ylab = "Pearson residuals",
+     cex.lab = 2)
+abline(h = 0, lty = 2)
+plot(seeds$DATE.ORD, y = E1, xlab = "Sampling period", ylab = "Pearson residuals",
+     cex.lab = 2)
+abline(h = 0, lty = 2)
+boxplot(E1 ~ TREATMENT, data = seeds, xlab = "Treatment", ylab = "Pearson residuals",
+        cex.lab = 2)
+abline(h = 0, lty = 2)
+boxplot(E1~BLOCK, data = seeds, xlab = "Block", ylab = "Pearson residuals",
+        cex.lab = 2)
+abline(h = 0, lty = 2)
+dev.off()
+
 ## --------------- Calculate and export means ----------------------------------
 
-emmeans(seeds.rich.nb, pairwise ~TREATMENT, type = 'response')
+emmeans(seeds.rich.nb, pairwise ~TREATMENT, type = 'response',
+        adjust = "none")
 
 emtrends(seeds.rich.nb, pairwise ~ TREATMENT, var = "DATE.ORD", type = 'response')
 # emtrends(seeds.rich.nb, pairwise ~ TREATMENT, var = "EXP.DAYS")
@@ -220,5 +245,4 @@ emmip(seeds.rich.nb, TREATMENT ~ DATE.ORD,
   scale_color_manual(values=cols)
 
 ggsave("Figures/Experiment-2-seed-rich.png", width = 5, height = 7, units = "in")
-
 
