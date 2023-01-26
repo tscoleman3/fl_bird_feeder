@@ -30,14 +30,14 @@ library(mvabund)
 rm(list=ls())
 
 # Bring in the data
-seeds <- read.csv(file = "data/seed_traps2.0.csv",
+seeds <- read.csv(file = "data/clean_seed_traps.csv",
                   header = TRUE, stringsAsFactors = FALSE)
 
 ## --------------- MANYGLM -----------------------------------------------------
 
 # Separate the community data from the predictor variables
-comm.mat <- seeds[,5:35]
-comm.mat.mv <- mvabund(seeds[,5:35])
+comm.mat <- seeds[,5:31]
+comm.mat.mv <- mvabund(seeds[,5:31])
 predictors <- seeds[,1:4]
 
 # Run simple models
@@ -85,3 +85,4 @@ seeds %>%
             SD = sd(DETECTIONS),
             N = n(),
             SE = SD/sqrt(N))
+

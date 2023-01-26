@@ -27,11 +27,11 @@ library(lubridate)
 rm(list = ls())
 
 # Bring in the data
-seeds <- read.csv(file = "data/seed_traps2.0.csv",
+seeds <- read.csv(file = "data/clean_seed_traps.csv",
                   header = TRUE, stringsAsFactors = FALSE)
 
 
-comm.mat <- seeds[,5:35]
+comm.mat <- seeds[,5:31]
 predictors <- seeds[,1:4]
 
 comm.mat.pa <- decostand(comm.mat, "pa")
@@ -41,7 +41,7 @@ seeds <- cbind(predictors[,1:4], comm.mat.pa)
 
 seeds$RICH <- NA
 for(i in 1:nrow(seeds)){
-  seeds$RICH[i] <- sum(seeds[i,5:35])
+  seeds$RICH[i] <- sum(seeds[i,5:31])
 }  
 
 ## --------------- Calculate days between samples ------------------------------
@@ -136,8 +136,9 @@ dotplot(seeds$RICH)
 plotdist(seeds$RICH, histo = TRUE, demp = TRUE)
 descdist(seeds$RICH, discrete=TRUE, boot=500) # NB/poisson
 
-seeds.rich.nb <- glmer.nb(RICH ~ TREATMENT * DATE.ORD + (1|BLOCK),
-            data = seeds) 
+seeds.rich.nb <- glmer.nb(RICH ~ TREATMENT * DATE.ORD + (1|BLOCK), data = seeds) 
+
+library('optimx')
 
 # seeds.rich.nb <- glmer(RICH ~ TREATMENT * EXP.DAYS + (1|BLOCK),
                           # family = 'poisson', data = seeds) 
