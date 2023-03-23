@@ -1,0 +1,94 @@
+# Poisson with numeric week and interaction
+bird.rich.pois.1 <- glmer(richness ~ treatment * as.numeric(week.order) + (1|site), 
+                          control = glmerControl(optimizer ="bobyqa"),
+                          family = poisson(link = "log"), data = bird.rich)
+sim.bird.rich.pois.1 <- simulateResiduals(bird.rich.pois.1)
+plot(sim.bird.pois.1)
+dev.new()
+check_model(bird.rich.pois.1)
+Anova(bird.rich.pois.1)
+
+# Negative binomial with numeric week and interaction
+bird.rich.nb.1 <- glmer.nb(richness ~ treatment * as.numeric(week.order)
+                          + (1|site), data = bird.rich)
+# No convergence
+
+# Normal with numeric week and interaction
+bird.rich.lm.1 <- lmer(richness ~ treatment * as.numeric(week.order)
+                           + (1|site), data = bird.rich)
+sim.bird.rich.lm.1 <- simulateResiduals(bird.rich.lm.1)
+dev.new()
+plot(sim.bird.rich.lm.1) # KS deviation, outer newton not converging
+summary(bird.rich.lm.1)
+dev.new()
+check_model(bird.rich.lm)
+Anova(bird.rich.lm.1)
+
+# Poisson with numeric week and interaction with no random effects
+bird.rich.pois.2 <- glm(richness ~ treatment * as.numeric(week.order)
+                        + site, family = poisson(link = "log"), data = bird.rich)
+sim.bird.rich.pois.2 <- simulateResiduals(bird.rich.pois.2)
+dev.new()
+plot(sim.bird.rich.pois.2) # Fails dispersion and quantile
+dev.new()
+check_model(bird.rich.pois.2) # High collinearity which may influence parameter estimates
+summary(bird.rich.pois.2) # 905.37
+
+# Negative binomial with numeric week and interaction but no random effects
+bird.rich.nb.2 <- glm.nb(richness ~ treatment * as.numeric(week.order)
+                           + site, data = bird.rich)
+# No convergence
+
+bird.rich.lm.2 <- lm(richness ~ treatment * as.numeric(week.order)
+                       + site, data = bird.rich)
+sim.bird.rich.lm.2 <-  simulateResiduals(bird.rich.lm.2)
+plot(sim.bird.rich.lm.2) # KS and quantiles
+AIC(bird.rich.lm.2)
+
+# Poisson with factor week 
+bird.rich.pois.3 <- glmer(richness ~ treatment + week.order
+                         + (1|site), family = poisson(link = "log"), data = bird.rich)
+sim.bird.rich.pois.3 <- simulateResiduals(bird.rich.pois.3)
+summary(bird.rich.pois.3) # 926.5
+dev.new()
+plot(sim.bird.rich.pois.3) # Fails KS and quantiles
+dev.new()
+check_model(bird.rich.pois.3) 
+
+# Linear model with numeric week and interaction
+bird.rich.lm.3 <- lmer(richness ~ treatment + 
+                       + week.order + (1|site), data = bird.rich)
+summary(bird.rich.lm.3)
+dev.new()
+sim.bird.rich.lm.3 <- simulateResiduals(bird.rich.lm.3)
+dev.new()
+plot(sim.bird.rich.lm.3) # Fails quantiles and KS deviation
+AIC(bird.rich.lm.3) # 1056.003
+
+bird.rich.nb.3 <- glmer.nb(richness ~ treatment + week.order + (1|site), 
+                           data = bird.rich)
+sim.bird.rich.nb.3 <- simulateResiduals(bird.rich.nb.3)
+plot(sim.bird.rich.nb.3) # Deviation KS significant
+summary(bird.rich.nb.3) # 928.5
+check_model(bird.rich.nb.3)
+
+# Clear out the model attempts
+rm(bird.rich.pois.2, sim.bird.rich.pois.2, bird.rich.pois.3, 
+   sim.bird.rich.pois.3, bird.rich.lm.1, sim.bird.rich.lm.1,
+   bird.rich.lm.2, sim.bird.rich.lm.2, bird.rich.lm.3, 
+   sim.bird.rich.lm.3, bird.rich.nb.3, sim.bird.rich.nb.3)
+
+# Poisson model with numeric week and interaction and no random 
+# effects for block is the best choice
+bird.rich$week.order <- as.numeric(bird.rich$week.order)
+bird.rich.pois <- glm(richness ~ treatment * week.order
+                        + site, family = poisson(link = "log"), data = bird.rich)
+sim.bird.rich.pois <- simulateResiduals(bird.rich.pois)
+dev.new()
+plot(sim.bird.rich.pois) # Fails dispersion and quantile
+dev.new()
+check_model(bird.rich.pois) 
+# Check collinearity and fat tails
+summary(bird.rich.pois) # 905.37
+
+Anova(bird.rich.pois) 
