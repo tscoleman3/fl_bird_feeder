@@ -38,7 +38,7 @@ library(performance)
 
 rm(list=ls())
 
-bird.dat.og <- read.csv(file = "data/Experiment-2-birds.csv",
+bird.dat.og <- read.csv(file = "data/Experiment-2-birds-raw.csv",
                         header = TRUE)
 head(bird.dat.og)
 
@@ -143,6 +143,10 @@ bird.mod$week.order <- factor(bird.mod$week.order,
                       levels = c('1','2','3','4','5','6','7','8','9','10'))
 bird.mod$treatment <- factor(bird.mod$treatment, 
                             levels = c("0", "4", "8", "12"))
+
+# Export the data
+write.csv(bird.mod, 'Data/Experiment-2-bird-observations.csv',
+          row.names = FALSE)
 
 ## --------------- Model total detections --------------------------------------
 

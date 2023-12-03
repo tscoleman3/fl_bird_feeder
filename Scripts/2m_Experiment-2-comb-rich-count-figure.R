@@ -25,7 +25,6 @@ bird.rich <- readRDS(file = "Model-output/total-mean-bird-rich.RDS")
 seed.count <- readRDS(file = "Model-output/total-mean-seed-count.RDS")
 seed.rich <- readRDS(file = "Model-output/total-mean-seed-rich.RDS")
 
-dev.new()
 (bird.count + labs(x = NULL) + theme(axis.text.x = element_blank()) +
   bird.rich + labs(x = NULL) + theme(axis.text.x = element_blank())) / (seed.count + seed.rich) +
   plot_annotation(tag_levels = c("A", "1"))

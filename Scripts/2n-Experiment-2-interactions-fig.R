@@ -41,11 +41,13 @@ bird.rich.coef <- ggplot(bird.rich, aes(x = Treatment, y = Estimate))+
              shape = 21, size = 6, color = "Black", stroke = 1.7)+
   scale_fill_manual(values = c("darkgray", "#00A9FF", "#00BF7D",  "#FF61CC"))+  
   scale_y_continuous(limits = c(-0.1, 0.2))+
-  ylab('Parameter Estimate')+
+  ylab('Slope Estimate')+
   theme_bw()+
   theme(text = element_text(size = 20),
-        legend.position = "none")+
-  theme(axis.text = element_text(face="bold"))
+        legend.position = "none",
+        axis.text = element_text(face="bold"),
+        panel.grid.minor = element_blank(),
+        panel.grid.major.x = element_blank())
 
 # Seed counts
 seed.count$Treatment <- as_factor(seed.count$Treatment)
@@ -58,11 +60,13 @@ seed.count.coef <- ggplot(seed.count, aes(x = Treatment, y = Estimate))+
              shape = 21, size = 6, color = "Black", stroke = 1.7)+
   scale_fill_manual(values = c("darkgray", "#00A9FF", "#00BF7D",  "#FF61CC"))+  
   scale_y_continuous(limits = c(-0.075, 0.075))+
-  ylab('Parameter Estimate')+
+  ylab('Slope Estimate')+
   theme_bw()+
   theme(text = element_text(size = 20),
-        legend.position = "none")+
-  theme(axis.text = element_text(face="bold"))
+        legend.position = "none",
+        axis.text = element_text(face="bold"),
+        panel.grid.minor = element_blank(),
+        panel.grid.major.x = element_blank())
 
 # Seed rich
 seed.rich$Treatment <- factor(seed.rich$Treatment, 
@@ -74,19 +78,20 @@ seed.rich.coef <- ggplot(seed.rich, aes(x = Treatment, y = Estimate))+
   geom_point(aes(color = Treatment, fill = Treatment),
              shape = 21, size = 6, color = "Black", stroke = 1.7)+
   scale_fill_manual(values = c("darkgray", "#00A9FF", "#00BF7D",  "#FF61CC"))+  
-  ylab('Parameter Estimate')+
+  ylab('Slope Estimate')+
   scale_y_continuous(limits = c(-0.06, 0.06))+
   theme_bw()+
   theme(text = element_text(size = 20),
-        legend.position = "none")+
-  theme(axis.text = element_text(face="bold"))
+        legend.position = "none",
+        axis.text = element_text(face="bold"),
+        panel.grid.minor = element_blank(),
+        panel.grid.major.x = element_blank())
 
 # Bring in the interaction plots
 bird.rich.interact <- readRDS(file = "Model-output/weekly-mean-bird-rich-interact.RDS")
 seed.rich.interact <- readRDS(file = "Model-output/periodic-mean-seed-rich-interact.RDS")
 seed.count.interact <- readRDS(file = "Model-output/periodic-mean-seed-count-interact.RDS")
 
-dev.new()
 ((bird.rich.interact+theme(plot.margin = margin(0.5,0.5,0.5,0.5,'cm'))+theme(legend.position = "none"))+(bird.rich.coef+labs(x=NULL)+theme(axis.text.x=element_blank())))/
   ((seed.count.interact+labs(x=NULL)+theme(plot.margin = margin(0.5,0.5,0.5,0.5,'cm'))) + (seed.count.coef+labs(x=NULL)+theme(axis.text.x=element_blank())))/
     ((seed.rich.interact+theme(plot.margin = margin(0.5,0.5,0.5,0.5,'cm'))) + seed.rich.coef)+plot_annotation(tag_levels = c('A', '1'))

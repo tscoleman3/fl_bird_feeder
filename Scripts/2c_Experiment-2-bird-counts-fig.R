@@ -17,28 +17,73 @@
 
 library(tidyverse)
 
-# Clear the 
+# Clear the decks
 rm(list=ls())
 
 # Import the data
-d <- read.csv("Model-output/Experiment-2-weekly-bird-counts-emmeans.csv")
+means <- read.csv("Model-output/Experiment-2-weekly-bird-counts-emmeans.csv")
+raw <- read.csv("Data/Experiment-2-bird-observations.csv")
+
+## --------------- Clean the means dataframe -----------------------------------
 
 # Drop some variables we do not need
-d <- d[,c(1,2,5,6)]
+means <- means[,c(1,2,5,6)]
 
 # Give the columns meaningful or clear names
-colnames(d)[1] <- "Treatment.num"
-colnames(d)[2] <- "Mean"
-colnames(d)[3] <- "LCL"
-colnames(d)[4] <- "UCL"
+colnames(means)[1] <- "Treatment.num"
+colnames(means)[2] <- "Mean"
+colnames(means)[3] <- "LCL"
+colnames(means)[4] <- "UCL"
 
 # Add a verbal descriptor column for the treatment
 treat <- tibble(Treatment = c("Control", "Low",
                                   "Medium", "High"))
-d <- cbind(d,treat)
+means <- cbind(means,treat)
 
 # Make sure the factor is a factor
-d$Treatment <- as_factor(d$Treatment)
+means$Treatment <- as_factor(means$Treatment)
+
+## --------------- Clean and add the raw dataframe -----------------------------
+
+# Fix column names for raw df
+colnames(raw)[3] <- "Treatment.num"
+
+# Create totals
+summed <- raw |>
+  group_by(site, Treatment.num) |>
+  summarize(Count = sum(count))
+
+# Combine the dataframes
+d <- merge(summed, means)
+
+# Remove other dataframes
+rm(means, raw, treat, summed)
+
+## --------------- Create the new figure ---------------------------------------
+
+cols <- c("darkgray", "#00A9FF", "#00BF7D",  "#FF61CC")
+
+dev.new()
+bird.count <- ggplot(d, aes(x = Treatment, y = log(Count+1), fill = Treatment))+
+  geom_jitter(shape = 21, width = 0.2, height = 0.2, size = 3, alpha = 0.5)+
+  scale_fill_manual(values = c("darkgray", "#00A9FF", "#00BF7D",  "#FF61CC"))+
+  geom_point(aes(x = Treatment, y = log(Mean*10), size = 5))+
+  geom_errorbar(aes(ymin = log(LCL*10), ymax = log(UCL*10)), width = 0, size = 1)+
+  scale_y_continuous(limits = c(0,6.6),
+                     breaks = c(0, 2.302585, 4.60517, 6.907755),
+                     labels = c("0", "10", "100", "1000"),
+                     oob = scales::squish)+
+  xlab("Feeder resource richness")+
+  ylab('Mean total bird count')+
+  theme_bw()+
+  theme(text = element_text(size = 20),
+        legend.position = "none",
+        axis.text = element_text(face="bold"),
+        panel.grid = element_blank())
+
+saveRDS(bird.count, file = "Model-output/total-mean-bird-count.RDS")
+
+## --------------- Create the old figure ---------------------------------------
 
 # Create a vector of colors for the figure
 cols <- c("darkgray", "#00A9FF", "#00BF7D",  "#FF61CC")
@@ -55,7 +100,7 @@ bird.count <- ggplot(d, aes(x = Treatment, y = Mean*10))+
   theme(text = element_text(size = 20),
         legend.position = "none")+
   theme(axis.text = element_text(face="bold"))
-saveRDS(bird.count, file = "Model-output/total-mean-bird-count.RDS")
+# saveRDS(bird.count, file = "Model-output/total-mean-bird-count.RDS")
 # ggsave("Figures/Experiment-2-bird-counts-total.png", width = 5, height = 7, units = "in")
 
 

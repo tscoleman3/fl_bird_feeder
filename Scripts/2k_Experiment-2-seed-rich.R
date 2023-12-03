@@ -78,6 +78,9 @@ for(i in 1:nrow(seed.rich)){
   seed.rich$RICH[i] <- sum(seed.rich[i,4:29])
 }  
 
+write.csv(seed.rich, "Data/Experiment-2-seed-richness.csv",
+          row.names = FALSE)
+
 ## --------------- Model total richness ----------------------------------------
 
 seed.rich$TREATMENT <- as_factor(seed.rich$TREATMENT)
@@ -577,9 +580,11 @@ seed.rich.interact <- emmip(seeds.rich.nb, TREATMENT ~ EXP.DAYS, cov.reduce = ra
   scale_x_continuous(limits = c(5,80),
                      breaks = seq(0,80,10))+
   xlab('Days since start of experiment')+
-  theme_bw()+  theme(text = element_text(size = 20),
-                     legend.position = "none")+
-  theme(axis.text = element_text(face="bold"))
+  theme_bw()+
+  theme(text = element_text(size = 20),
+        legend.position = "none",
+        axis.text = element_text(face="bold"),
+        panel.grid.minor = element_blank())
 saveRDS(seed.rich.interact, file = "Model-output/periodic-mean-seed-rich-interact.RDS")
 
 # ggsave("Figures/Experiment-2-periodic-seed-rich-interaction.png", width = 5, height = 7, units = "in")

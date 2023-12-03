@@ -388,14 +388,16 @@ seed.count.interact <- emmip(seed.detect.mod, TREATMENT ~ EXP.DAYS, cov.reduce =
   ylab('Seed count')+
   xlab('Days since start of experiment')+
   scale_y_continuous(
-                     limits = c(-0.12,10))+
+                     limits = c(-0.12,10),
+                     oob = scales::squish)+
   scale_x_continuous(
                      limits = c(5,80),
                      breaks = seq(0,80,10))+
   theme_bw()+
   theme(text = element_text(size = 20),
-        legend.position = "none")+
-  theme(axis.text = element_text(face="bold"))
+        legend.position = "none",
+        axis.text = element_text(face="bold"),
+        panel.grid.minor = element_blank())
 saveRDS(seed.count.interact, file = "Model-output/periodic-mean-seed-count-interact.RDS")
 # ggsave('Figures/Experiment-2-periodic-seed-count-interaction.png')
 

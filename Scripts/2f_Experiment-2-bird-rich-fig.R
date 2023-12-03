@@ -16,25 +16,67 @@
 
 library(tidyverse)
 
+# Clear the decks
 rm(list=ls())
 
-d <- read.csv("Model-output/Experiment-2-total-bird-rich-emmeans.csv")
+# Bring in emmeans and raw data
+means <- read.csv("Model-output/Experiment-2-total-bird-rich-emmeans.csv")
+raw <- read.csv("Data/Experiment-2-bird-richness.csv") |>
+  dplyr::select(site, treatment, richness)
 
-colnames(d)[1] <- "Treatment.num"
-colnames(d)[2] <- "Mean"
-colnames(d)[3] <- "se"
-colnames(d)[4] <- "df"
-colnames(d)[5] <- "LCL"
-colnames(d)[6] <- "UCL"
+## --------------- Clean the means dataframe -----------------------------------
 
-# sort data
-d <- d[order(d$Treatment.num),]
+# Fix column names for means df
+colnames(means)[1] <- "Treatment.num"
+colnames(means)[2] <- "Mean"
+colnames(means)[3] <- "se"
+colnames(means)[4] <- "df"
+colnames(means)[5] <- "LCL"
+colnames(means)[6] <- "UCL"
 
-# add treatment description
+# sort data for means df
+means <- means[order(means$Treatment.num),]
+
+# add treatment description for means df
 treat <- tibble(Treatment = c("Control", "Low",
                                   "Medium", "High"))
-d <- cbind(d,treat)
-d$Treatment <- as_factor(d$Treatment)
+means <- cbind(means,treat)
+means$Treatment <- as_factor(means$Treatment)
+
+## --------------- Clean and add the raw dataframe -----------------------------
+
+# Fix column names for raw df
+colnames(raw)[2] <- "Treatment.num"
+
+# Combine the dataframes
+d <- merge(raw, means)
+
+# Remove other dataframes
+rm(means, raw, treat)
+
+## --------------- Create the new figure ---------------------------------------
+
+cols <- c("darkgray", "#00A9FF", "#00BF7D",  "#FF61CC")
+
+dev.new()
+bird.rich <- ggplot(d, aes(x = Treatment, y = richness, fill = Treatment))+
+  geom_jitter(shape = 21, width = 0.2, height = 0.2, size = 3, alpha = 0.5)+
+  scale_fill_manual(values = c("darkgray", "#00A9FF", "#00BF7D",  "#FF61CC"))+
+  geom_point(aes(x = Treatment, y = Mean, size = 5))+
+  geom_errorbar(aes(ymin = LCL, ymax = UCL), width = 0, size = 1)+  
+  scale_y_continuous(limits = c(0.5,5), breaks = c(0,1,2,3,4,5),
+                     oob = scales::squish)+
+  xlab("Feeder resource richness")+
+  ylab('Mean total bird richness')+
+  theme_bw()+
+  theme(text = element_text(size = 20),
+        legend.position = "none",
+        axis.text = element_text(face="bold"),
+        panel.grid = element_blank())
+
+saveRDS(bird.rich, file = "Model-output/total-mean-bird-rich.RDS")
+
+## --------------- Create the old figure ---------------------------------------
 
 cols <- c("darkgray", "#00A9FF", "#00BF7D",  "#FF61CC")
 
@@ -53,5 +95,5 @@ bird.rich <- ggplot(d, aes(x = Treatment, y = Mean))+
         legend.position = "none")+
   theme(axis.text = element_text(face="bold"))
 
-saveRDS(bird.rich, file = "Model-output/total-mean-bird-rich.RDS")
+# saveRDS(bird.rich, file = "Model-output/total-mean-bird-rich.RDS")
 # ggsave("Figures/Experiment-2-bird-total-rich.png", width = 5, height = 7, units = "in")

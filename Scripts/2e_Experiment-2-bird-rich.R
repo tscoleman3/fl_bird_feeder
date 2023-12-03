@@ -45,7 +45,7 @@ library(pscl)
 
 rm(list=ls())
 
-bird.dat.og <- read.csv(file = "data/Experiment-2-birds.csv",
+bird.dat.og <- read.csv(file = "data/Experiment-2-birds-raw.csv",
                         header = TRUE)
 head(bird.dat.og)
 
@@ -126,6 +126,9 @@ bird.rich <- bird.wd |>
 
 bird.rich$site <- as_factor(bird.rich$site)
 
+# Save the richness dataframe
+write.csv(bird.rich, 'Data/Experiment-2-bird-richness.csv',
+          row.names = FALSE)
 ## --------------- Model total richness ----------------------------------------
 
 # Visualize the data 
@@ -578,8 +581,9 @@ bird.rich.interact <- emmip(bird.rich.pois, treatment ~ week.order, cov.reduce =
   xlab('Weeks since acclimitization period')+
   theme_bw()+
   theme(text = element_text(size = 20),
-        legend.position = "right")+
-  theme(axis.text = element_text(face="bold"))
+        legend.position = "right",
+        axis.text = element_text(face="bold"),
+        panel.grid.minor = element_blank())
 
 saveRDS(bird.rich.interact, file = "Model-output/weekly-mean-bird-rich-interact.RDS")
 # ggsave('Figures/Experiment-2-weekly-bird-rich-interaction.png')
