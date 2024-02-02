@@ -274,14 +274,14 @@ plot(infl, which = "cook", cutoff = 4/10)
 ## --------------- Export total model outputs ----------------------------------
 
 # EMMEANS
-emmeans(seeds.tot.rich.pois, pairwise ~TREATMENT, type = 'response',
+emmeans(seeds.tot.rich.pois, revpairwise ~TREATMENT, type = 'response',
         adjust = 'holm') # With correction
 confint(emmeans(seeds.tot.rich.pois, pairwise ~TREATMENT, type = 'response',
                 adjust = 'holm'))
 
-emmeans(seeds.tot.rich.pois, pairwise ~TREATMENT, type = 'response',
+emmeans(seeds.tot.rich.pois, revpairwise ~TREATMENT, type = 'response',
         adjust = 'none') # No correction
-confint(emmeans(seeds.tot.rich.pois, pairwise ~TREATMENT, type = 'response',
+confint(emmeans(seeds.tot.rich.pois, revpairwise ~TREATMENT, type = 'response',
                 adjust = 'none'))
 
 # Calculate explained variance
@@ -292,7 +292,9 @@ r.squaredGLMM(seeds.tot.rich.pois)
 
 # Export the means
 means <- as.data.frame(emmeans(seeds.tot.rich.pois, pairwise ~TREATMENT, 
-                               type = 'response')[1])
+                               type = 'response', adjust = 'none')[1])
+means2 <- as.data.frame(emmeans(seeds.tot.rich.pois, pairwise ~TREATMENT, 
+                               type = 'response', adjust = 'holm')[1])
 write.csv(means, "Model-output/Experiment-2-total-seed-rich-emmeans.csv", row.names = FALSE)
 
 ## --------------- Calculate weekly richness -----------------------------------
@@ -540,11 +542,16 @@ dev.off()
 # Mean weekly seed richness
 emmeans(seeds.rich.nb, pairwise ~TREATMENT, type = 'response', 
         adjust = "holm")
+confint(pairs(emmeans(seeds.rich.nb, pairwise ~TREATMENT, type = 'response', 
+        adjust = "holm")))
+
 emmeans(seeds.rich.nb, pairwise ~TREATMENT, type = 'response', 
         adjust = "none") # no correction
+confint(emmeans(seeds.rich.nb, pairwise ~TREATMENT, type = 'response', 
+        adjust = "none")) # Pairs will not allow no adjustment?
 
 means <- as.data.frame(emmeans(seeds.rich.nb, pairwise ~TREATMENT, type = 'response',
-                               adjust = "holm", at=list(week.order=c(1,2,3,4,5)))[1])
+                               adjust = "none", at=list(week.order=c(1,2,3,4,5)))[1])
 write.csv(means, "Model-output/Experiment-2-periodic-seed-rich-emmeans.csv", row.names = FALSE)
 
 

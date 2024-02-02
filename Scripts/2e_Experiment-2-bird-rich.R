@@ -264,9 +264,9 @@ scatter.smooth(bird.rich$site, bird.rich$residuals)
 ## --------------- Export coefficient estimates --------------------------------
 
 # EMMEANS
-emmeans(bird.rich.lm, pairwise ~treatment, type = 'response',
+emmeans(bird.rich.lm, revpairwise ~treatment, type = 'response',
         adjust = 'holm')
-confint(emmeans(bird.rich.lm, pairwise ~treatment, type = 'response',
+confint(emmeans(bird.rich.lm, revpairwise ~treatment, type = 'response',
         adjust = 'holm'))
 
 emmeans(bird.rich.lm, pairwise ~treatment, type = 'response',
@@ -275,7 +275,7 @@ confint(emmeans(bird.rich.lm, pairwise ~treatment, type = 'response',
                 adjust = 'none'))
 
 means <- as.data.frame(emmeans(bird.rich.lm, pairwise ~treatment, 
-                               type = 'response')[1])
+                               type = 'response', adjust = 'none')[1])
 write.csv(means, "Model-output/Experiment-2-total-bird-rich-emmeans.csv", row.names = FALSE)
 
 
@@ -548,14 +548,18 @@ confint(pairs(emmeans(bird.rich.pois, ~treatment)),
         type = "response", adjust = 'none') # Confidence intervals
 
 means <- as.data.frame(emmeans(bird.rich.pois, pairwise ~treatment, type = 'response',
-                               adjust = "holm")[1])
+                               adjust = "none")[1])
 write.csv(means, "Model-output/Experiment-2-weekly-bird-rich-emmeans.csv", row.names = FALSE)
 
 # Calculate interactive effects between treatment and week
 emtrends(bird.rich.pois, pairwise~treatment, var = "week.order",
          adjust = "holm", type = 'response')
+confint(pairs(emtrends(bird.rich.pois, pairwise~treatment, var = "week.order",
+         adjust = "holm", type = 'response')))
 emtrends(bird.rich.pois, pairwise~treatment, var = "week.order",
          adjust = "none", type = 'response') # No adjustments
+confint(emtrends(bird.rich.pois, pairwise~treatment, var = "week.order",
+         adjust = "none", type = 'response')) # Removed pairs for no correction
 
 trends <- tibble(Treatment = c('Control', 'Low', 'Medium', 'High'),
                  Estimate = c(0.0132, 0.0903, 0.0709, 0.0981),

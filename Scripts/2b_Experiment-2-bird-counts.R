@@ -58,11 +58,14 @@ bird.dat.drop <- bird.dat %>%
   mutate(week = week(date)) %>% 
   filter(week != 48 & week != 47)
 
+# Calculate days of coverage
+range(bird.dat.drop$date)
+as_date("2021-01-31")-as_date("2020-12-02")
+# Time difference of 60 days
+
 # remove NA's
 bird.clean <- bird.dat.drop %>% 
   drop_na(species)
-
-bird.clean$treatment <- as.factor(bird.clean$treatment)
 
 ## --------------- Prepare data ------------------------------------------------
 
@@ -355,7 +358,7 @@ confint(pairs(emmeans(birds.obs.fit.nb, ~treatment)),
         type = "response", adjust = 'none')
 
 means <- as.data.frame(emmeans(birds.obs.fit.nb, pairwise ~treatment, 
-                               type = 'response')[1])
+                               type = 'response', adjust = 'none')[1])
 write.csv(means, "Model-output/Experiment-2-weekly-bird-counts-emmeans.csv", row.names = FALSE)
 
 # Calculate r2

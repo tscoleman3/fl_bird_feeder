@@ -327,17 +327,17 @@ dev.off()
 # Means Holm correction
 emmeans(seed.detect.mod, pairwise ~TREATMENT, 
         type = 'response', adjust = 'holm')
-confint(pairs(emmeans(seed.detect.mod, ~TREATMENT)), 
-        type = "response", adjust = 'holm')
+confint(emmeans(seed.detect.mod, pairwise ~TREATMENT), 
+        type = "response", adjust = 'holm') 
 
 # Means no correction
-emmeans(seed.detect.mod, pairwise ~TREATMENT, 
+emmeans(seed.detect.mod, revpairwise ~TREATMENT, 
         type = 'response', adjust = 'none')
-confint(pairs(emmeans(seed.detect.mod, ~TREATMENT)), 
-        type = "response", adjust = 'none')
+confint(emmeans(seed.detect.mod, revpairwise~TREATMENT), 
+        type = "response", adjust = 'none') 
 
 means <- as.data.frame(emmeans(seed.detect.mod, pairwise ~TREATMENT, 
-                               type = 'response')[1])
+                               type = 'response', adjust = 'none')[1])
 write.csv(means, "Model-output/Experiment-2-periodic-seed-counts-emmeans.csv", row.names = FALSE)
 
 # Calculate interactive effects between treatment and week
@@ -346,12 +346,12 @@ emtrends(seed.detect.mod, pairwise~TREATMENT, var = "EXP.DAYS",
 confint(emtrends(seed.detect.mod, pairwise~TREATMENT, var = "EXP.DAYS",
                  adjust = "holm", type = 'response'))
 
-emtrends(seed.detect.mod, pairwise~TREATMENT, var = "EXP.DAYS",
+emtrends(seed.detect.mod, revpairwise~TREATMENT, var = "EXP.DAYS",
          adjust = "none", type = 'response') # no correction
-confint(emtrends(seed.detect.mod, pairwise~TREATMENT, var = "EXP.DAYS",
+confint(emtrends(seed.detect.mod, revpairwise~TREATMENT, var = "EXP.DAYS",
                  adjust = "none", type = 'response'))
 
-# Creat a table for the trends
+# Create a table for the trends
 trends <- tibble(Treatment = c('Control', 'Low', 'Medium', 'High'),
                  Estimate = c(-0.0202, 0.0231, 0.0290, 0.0437),
                  LCL = c(-0.05173, -0.00156, 0.00620, 0.01954),
@@ -365,13 +365,13 @@ r.squaredGLMM(seed.detect.mod)
 # 0.05554567-0.03004455 = 0.02550112
 
 # Fix order of factor levels for model
-seeds.lg$TREATMENT <- factor(seeds.lg$TREATMENT, 
-                             levels=c('Control', 'Low', 'Medium', 'High'),
-                             ordered = TRUE)
-# Run model
-seed.detect.mod <- glmer.nb(COUNT ~  TREATMENT * EXP.DAYS + (1|BLOCK),
-                            control = glmerControl(optimizer ="Nelder_Mead"),
-                            data = seeds.lg)
+# seeds.lg$TREATMENT <- factor(seeds.lg$TREATMENT, 
+#                              levels=c('Control', 'Low', 'Medium', 'High'),
+#                              ordered = TRUE)
+# # Run model
+# seed.detect.mod <- glmer.nb(COUNT ~  TREATMENT * EXP.DAYS + (1|BLOCK),
+#                             control = glmerControl(optimizer ="Nelder_Mead"),
+#                             data = seeds.lg)
 # Throwing up convergence issues after fixing factor order but still producing
 # outcome
 
