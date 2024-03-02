@@ -99,6 +99,9 @@ missing <- tibble(site = rep('six', 10),
                   week = as_factor(c('1','2','3','4','5','49','50','51','52','53')),
                   treatment = as_factor(rep('4', 10)),
                   count = rep(0,10))
+
+bird.mod$treatment <- as_factor(bird.mod$treatment)
+bird.mod$week <- as_factor(bird.mod$week)
 bird.mod <- rbind(bird.mod, missing)
 
 # Weeks are listed as week of year. It would be more useful for us to look at

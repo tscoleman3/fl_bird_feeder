@@ -24,11 +24,6 @@
 ## confidence intervals to use in the figure. We also export a ggplot object
 ## from emmip() for a supplementary figure describing interactive effects.
 
-# New error popped up on 2023-02-23 when running model weekly bird rich
-# or using the model object
-# "10: In commonArgs(par, fn, control, environment()) :
-# maxfun < 10 * length(par)^2 is not recommended.'
-
 ## --------------- Set up workspace --------------------------------------------
 library(tidyverse)
 library(lme4)
@@ -42,6 +37,7 @@ library(DHARMa)
 library(glmmTMB)
 library(fitdistrplus)
 library(pscl)
+library(performance)
 
 rm(list=ls())
 
